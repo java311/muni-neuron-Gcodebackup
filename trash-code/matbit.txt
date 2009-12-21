@@ -1,0 +1,65 @@
+public void MatToImg(ref byte[,] pixels, ref Bitmap b, string name)
+        {
+            BitmapData pixi = b.LockBits(new Rectangle(0, 0, b.Width, b.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            System.IntPtr scano = pixi.Scan0;   //Saca el numero apuntador a la primera casilla de la matriz
+            int stride = pixi.Stride; //Esto saca el ancho de la matriz para recorrer filas
+
+            unsafe
+            {
+                //int nVal;
+                byte* p = (byte*)(void*)scano;  //Saca el apuntador a la primera casilla de la matriz
+                int nOffset = stride - b.Width * 3; //Saca el corrimiento que se tiene que hacer por cada fila
+                int nWidth = b.Width;   //Se multipicla por que son 3 componentes
+
+                for (int y = 0; y < b.Height; ++y)
+                {
+                    for (int x = 0; x < nWidth; ++x)
+                    {
+                        p[0] = pixels[x, y];
+                        p[1] = pixels[x, y];
+                        p[2] = pixels[x, y];
+                        p = p + 3;
+                    }
+                    p = p + nOffset; //Se recorre una fila hacia abajo
+                }
+            }
+            b.UnlockBits(pixi);
+            b.Save(name+ "x");
+        }
+
+
+
+private int Calculate_Minimum(int x1, int y1, int x2, int y2)
+        {
+            int px, py;
+            double tx, ty;
+            double vx, vy;
+            int min = 255;
+            int n;
+            double r;
+
+            r = Math.Sqrt(Math.Pow((x2 - x1), 2.0f) + Math.Pow((y2 - y1), 2.0f));
+            tx = (x2 - x1) / r;
+            ty = (y2 - y1) / r;
+            n = (int)r;
+
+            Pen mypen = new Pen(Color.Aquamarine);
+            Graphics canvas = panel3_pictureBox1over.CreateGraphics();
+
+            for (int i = 1; i < n; i++)
+            {
+                vx = (x1 + tx * i);
+                vy = (y1 + ty * i);
+
+                px = (int)(Math.Round(vx));
+                py = (int)(Math.Round(vy));
+
+                canvas.FillRectangle(mypen.Brush, px, py, 1, 1);
+
+            }
+
+            mypen.Dispose();
+            canvas.Dispose();
+
+            return min;
+        }

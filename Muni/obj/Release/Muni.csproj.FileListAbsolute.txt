@@ -1,0 +1,12 @@
+C:\Documents and Settings\Administrador\Mis documentos\Visual Studio 2008\Projects\Muni3\Muni\bin\Release\Muni.exe.config
+C:\Documents and Settings\Administrador\Mis documentos\Visual Studio 2008\Projects\Muni3\Muni\obj\Release\Muni.exe
+C:\Documents and Settings\Administrador\Mis documentos\Visual Studio 2008\Projects\Muni3\Muni\obj\Release\Muni.pdb
+C:\Documents and Settings\Administrador\Mis documentos\Visual Studio 2008\Projects\Muni3\Muni\bin\Release\Muni.exe
+C:\Documents and Settings\Administrador\Mis documentos\Visual Studio 2008\Projects\Muni3\Muni\bin\Release\Muni.pdb
+C:\Documents and Settings\Administrador\Mis documentos\Visual Studio 2008\Projects\Muni3\Muni\obj\Release\ResolveAssemblyReference.cache
+C:\Documents and Settings\Administrador\Mis documentos\Visual Studio 2008\Projects\Muni3\Muni\obj\Release\Muni.About.resources
+C:\Documents and Settings\Administrador\Mis documentos\Visual Studio 2008\Projects\Muni3\Muni\obj\Release\Muni.Form1.resources
+C:\Documents and Settings\Administrador\Mis documentos\Visual Studio 2008\Projects\Muni3\Muni\obj\Release\Muni.Image_Form.resources
+C:\Documents and Settings\Administrador\Mis documentos\Visual Studio 2008\Projects\Muni3\Muni\obj\Release\Muni.Properties.Resources.resources
+C:\Documents and Settings\Administrador\Mis documentos\Visual Studio 2008\Projects\Muni3\Muni\obj\Release\Muni.Splash.resources
+C:\Documents and Settings\Administrador\Mis documentos\Visual Studio 2008\Projects\Muni3\Muni\obj\Release\Muni.csproj.GenerateResource.Cache

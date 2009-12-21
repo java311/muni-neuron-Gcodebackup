@@ -1,0 +1,117 @@
+private void fill_bytematrix_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+
+            for (int i = 0; i < filenames.Length; i++)
+            {
+                if ((worker.CancellationPending == true))
+                {
+                    e.Cancel = true;
+                    MessageBox.Show("The process had been canceled.", "ERROR - Muni", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                else
+                {
+                    using (FileStream fs = new FileStream(filenames[i], FileMode.Open, FileAccess.Read))
+                    {
+                        using (Image photo = Bitmap.FromStream(fs, true, false))
+                        {
+                            if ((dimx == photo.Width) && (dimy == photo.Height))
+                            {
+                                Fill_Matrix(photo , i);
+                                worker.ReportProgress(i+1);
+                            }
+                            else
+                            {
+                                MessageBox.Show("The images must have the same size.", "ERROR - Muni", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                e.Cancel = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+
+
+        private void fill_bytematrix_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            panel1_progress_label.Text = e.ProgressPercentage.ToString() + " of " + dimz.ToString();
+            panel1_progressBar.PerformStep();
+        }
+
+
+
+
+        private void fill_bytematrix_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Cancelled == true)
+            {
+                panel1_next.Enabled = !e.Cancelled;
+                panel1_progress_label.Text = string.Empty;
+                panel1_progressBar.Value = 0;
+                filenames = null;
+                matrix3d = null;
+            }
+            else
+            {
+                panel1_next.Enabled = !e.Cancelled;
+            }
+        }
+
+
+        private int Calculate_Minimum(int x1, int y1, int x2, int y2, int selplane)
+        {
+            if (selplane >= 0)
+            {
+
+                int px, py;
+                int vx, vy;
+                int min = 255;
+                int x11, y11, x22, y22;
+                int ix, iy, fx, fy;
+                int n;
+                Double r;
+
+                x11 = y11 = x22 = y22 = 0;
+
+                r = Math.Sqrt(Math.Pow((x2 - x1), 2.0f) + Math.Pow((y2 - y1), 2.0f));
+                vx = (int)Math.Round(((x2 - x1) / r));
+                vy = (int)Math.Round(((y2 - y1) / r));
+                n = (int)r;
+
+                for (int i = 1; i < n; i++)
+                {
+                    px = x1 + vx * i;
+                    py = y1 + vy * i;
+
+                    if (i == 1)
+                    { x11 = px; y11 = py; }
+                    if (i == n - 1)
+                    { x22 = px; y22 = py; }
+
+                    ix = px - 1; iy = py - 1;
+                    fx = px + 1; fy = py + 1;
+                    //if (ix < 0) { ix = 0; }
+                    //if (iy < 0) { iy = 0; }
+                    //if (fx >= dimx) { ix = dimx - 1; }
+                    //if (fy >= dimy) { iy = dimy - 1; }
+
+                    if (matrix3d[px, py, selplane] < min)
+                        min = matrix3d[px, py, selplane];
+                }
+
+                Pen mypen = new Pen(Color.Gainsboro);
+                Graphics canvas = panel3_pictureBox1over.CreateGraphics();
+
+                canvas.DrawLine(mypen, x11, y11, x22, y22);
+
+                mypen.Dispose(); canvas.Dispose();
+                return min;
+            }
+            else
+                return 255;
+        }
