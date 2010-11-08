@@ -1,0 +1,1487 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Muni</name>
+    </assembly>
+    <members>
+        <member name="T:Muni.MarchingCubes">
+            <summary>
+            This class implements the Marching Cubes Algorithm
+            </summary>
+        </member>
+        <member name="F:Muni.MarchingCubes.edgeTable">
+            <summary>
+            This table is very important for the reconstruction task, this table saves all the posible combinations
+            of edges intersected by the isosurface. These intersected combinations can only be consulted using the 
+            edgeindex value.
+            </summary>
+        </member>
+        <member name="F:Muni.MarchingCubes.triTable">
+            <summary>
+            This table is also very important. This one saves all the triangles configurations. These 
+            configurations are sorted using the edgeindex as the main index. So you can get the triangle
+            configuration on every vertex combination inside the isosurface.
+            </summary>
+        </member>
+        <member name="M:Muni.MarchingCubes.#ctor(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.String[]@,System.Windows.Forms.ProgressBar@,System.Windows.Forms.Label@,System.Windows.Forms.Button@,System.Windows.Forms.Button@)">
+            <summary>
+            This is the main constructor of the Marching Cubes algorithm. This basically initilizes several 
+            parameters for the Algorithm
+            </summary>
+            <param name="dimx">The width of the picture package</param>
+            <param name="dimy">The heigth of the picture package</param>
+            <param name="dimz">The number of images on the picture package</param>
+            <param name="isolevel">The calculated isolevel value</param>
+            <param name="cube_x">The cube x length</param>
+            <param name="cube_y">The cube y length</param>
+            <param name="filenames">A string array with the filenames of every image on the package</param>
+            <param name="progressbar">A progressbar object to indicate the task progress</param>
+            <param name="label_progress">A label to indicate the task objectives</param>
+            <param name="cancel">A cancel button to stop all the task</param>
+            <param name="finish">The finish button on the Image_Form</param>
+        </member>
+        <member name="M:Muni.MarchingCubes.Initalize_BgWorker">
+            <summary>
+            This function initilizes the backgroundworker parameters, like the progressbar value and steps.
+            </summary>
+        </member>
+        <member name="M:Muni.MarchingCubes.thread_DoWork(System.Object,System.ComponentModel.DoWorkEventArgs)">
+            <summary>
+            This funtion implements the Marching Cubes Algortihm on another thread. This was implemented trying to save memory
+            so the images are loaded in to the memory 4 by 4, and then the algorithm runs on them and then we save the mesh 
+            calulated data on a temporal file. When all the process finishes then all the data on the temporal file is loaded
+            on a new Mesh object and then the 3D model shows on the screen.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.MarchingCubes.thread_ProgressChanged(System.Object,System.ComponentModel.ProgressChangedEventArgs)">
+            <summary>
+            Every time the progressbar value changes, the label status text shows the current operating plane.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.MarchingCubes.thread_RunWorkerCompleted(System.Object,System.ComponentModel.RunWorkerCompletedEventArgs)">
+            <summary>
+            This is called when the thread task is canceled or completed.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.MarchingCubes.Fill_Matrix(System.Int32)">
+            <summary>
+            This fucntion fills a byte matrix with the pixel data inside a image file 4 by 4. This means
+            if n is 1  then 1,2,3 and 4 planes are loaded and if n is 2 then 2,3,4. This operation is 
+            necesary if we want to get some good time performance on the Marching Cube Algorithm.
+            </summary>
+            <param name="z">Recibes the number of the plane to be loaded</param>
+            <returns>0 on no error and a differen value on error</returns>
+        </member>
+        <member name="M:Muni.MarchingCubes.Add_Marching(System.IO.StreamWriter,System.Int32@,System.Collections.Generic.List{Muni.Punto},System.Collections.Generic.List{Muni.Punto})">
+            <summary>
+            This functions add a new marching cube to a temporary file on the root directory of the program.
+            Later this file will be readed again to build the final Mesh object. This is for save RAM memory.
+            </summary>
+            <param name="sw">This is the stream writer of the temporary file</param>
+            <param name="cubeindex">this is the cubeindex number and also called endeindex</param>
+            <param name="vertexes">this list has all the vertex dots for that machingcube</param>
+            <param name="normals">this list has all the normals for each dot of the mesh</param>
+        </member>
+        <member name="M:Muni.MarchingCubes.Vertex_Interpolate(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            This function interpolates a dot position on intersected edge line
+            </summary>
+            <param name="isolevel">The isolevel value it's used to interpolate the vertex position between the edge</param>
+            <param name="p1x">x coordenate of the first point</param>
+            <param name="p1y">y coordenate of the first point</param>
+            <param name="p1z">z coordenate of the first point</param>
+            <param name="p2x">x coordenate of the last point</param>
+            <param name="p2y">y coordenate of the last point</param>
+            <param name="p2z">z coordenate of the last point</param>
+            <param name="iz1"></param>
+            <param name="iz2"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.MarchingCubes.Normal_Interpolate(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            This function interpolates the normal value for the interpolated vertex in the intersected edge
+            </summary>
+            <param name="isolevel">The isolevel value helps to calculate the normal of the vertex</param>
+            <param name="p1x">x coordenate of the first point</param>
+            <param name="p1y">y coordenate of the first point</param>
+            <param name="p1z">z coordenate of the first point</param>
+            <param name="p2x">x coordenate of the last point</param>
+            <param name="p2y">y coordenate of the last point</param>
+            <param name="p2z">z coordenate of the last point</param>
+            <returns>This function return a Punto object with the normal coordenates</returns>
+        </member>
+        <member name="M:Muni.MarchingCubes.Get_Vertexes(System.Int32@,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            This function interpolates all the vertexes founded on a marching cube, and return them on a 
+            Point list. This list of vertex are obtained using the edgeindex, and the isolevel valuee. 
+            Because every single vertex is interpolated on a edge using the isolevel value.
+            </summary>
+            <param name="edgeindex">The edgeindex value with the vertex cube configuration</param>
+            <param name="isolevel">The isolevel value to interpolate the vertexes</param>
+            <param name="ix">the x coordinate value for the image postion cursor</param>
+            <param name="iy">the y coordinate value for the image postion cursor</param>
+            <param name="dim_x">The width of the marching cube</param>
+            <param name="dim_y">The heigth of the marching cube</param>
+            <param name="iz">This has the index of the current image plane</param>
+            <returns>Returns a list of Punto objects, with the coordenates interpolated vertexes</returns>
+        </member>
+        <member name="M:Muni.MarchingCubes.Get_Normals(System.Int32@,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            This function interpolates a normal for a interpolated vertex.
+            </summary>
+            <param name="edgeindex">The edgeindex value taken from the vertex cube configuration</param>
+            <param name="isolevel">The calculated isolevel value</param>
+            <param name="ix">the x coordinate value for the image postion cursor</param>
+            <param name="iy">the y coordinate value for the image postion cursor</param>
+            <param name="dim_x">The width of the marching cube</param>
+            <param name="dim_y">The heigth of the marching cube</param>
+            <param name="iz">This has the index of the current image plane</param>
+            <returns>Returns a list of Punto objects, with the coordenates interpolated normals</returns>
+        </member>
+        <member name="M:Muni.MarchingCubes.Corner_Check(System.Int32@,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            This function checks what corners of the cube are inside the isosurface using the isolevel value. 
+            This function returns the combination of vertexes inside the isosurface coded on a 8 bit integer, the 
+            edgeindex code is used as index to get the intersected edges and also the triangles configuration
+            </summary>
+            <param name="edgeindex">Reference value to return the edgeindex value for the vertex configuration of the cube</param>
+            <param name="edge">This parameter recives the isovalue to check wich vertexes are inside the surface</param>
+            <param name="ix">This is the x coordinate of the marching cube cursor</param>
+            <param name="iy">This is the y coordinate of the marching cube cursor</param>
+            <param name="iz">This is the z coordinate of the marching cube cursor</param>
+            <param name="dim_x">This is the width of the marching cube</param>
+            <param name="dim_y">This is the length of the marching cube</param>
+            <param name="dim_z">This is the depth of the marching cube</param>
+        </member>
+        <member name="M:Muni.MarchingCubes.Generate_Model">
+            <summary>
+            This function wraps the entire Marhing Cube Algorithm process.
+            </summary>
+            <returns>Returns false if an error ocurrs and true otherwise</returns>
+        </member>
+        <member name="T:Muni.Calibration">
+            <summary>
+            This class calculates the micronz resolution on the package image 
+            using the estimated diameter of one dendrite. This class uses one selected region 
+            </summary>
+        </member>
+        <member name="M:Muni.Calibration.#ctor">
+            <summary>
+            This is the default constructor of the class, this constructor only initilizes the 
+            tread initial parameters.
+            </summary>
+        </member>
+        <member name="M:Muni.Calibration.Initalize_BgWorker">
+            <summary>
+            This function initilizes all the thread parameters; like the progressbar value. An it also defines the EventHandlers
+            for the DoWork, ProgressChanged and the RunWorkerCompleted events.
+            </summary>
+        </member>
+        <member name="M:Muni.Calibration.thread_ProgressChanged(System.Object,System.ComponentModel.ProgressChangedEventArgs)">
+            <summary>
+            This events is called every time the progress percentage is incremented. This function also updates
+            the progressbar status on the user screen.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Calibration.thread_RunWorkerCompleted(System.Object,System.ComponentModel.RunWorkerCompletedEventArgs)">
+            <summary>
+            This event ocurrs when the thread task is completed, or when the thread task is cancelled.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Calibration.thread_DoWork(System.Object,System.ComponentModel.DoWorkEventArgs)">
+            <summary>
+            This function implements the main algorithm. This algorithm estimates the micronz value using the estimated
+            diameter of one dendrite in microns. This algorithm moves on the Z axis and finds the end and the begining of 
+            the selected dendrite. Using the number of planes and the estimated dendrite diameter in microns, the micronz 
+            parameter is estimated.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Calibration.Add_Line(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            This function add a line and a plane number into the class properties.
+            </summary>
+            <param name="x1">The begining x coordenate</param>
+            <param name="y1">The begining y coordenate</param>
+            <param name="x2">The end x coordenate</param>
+            <param name="y2">The end y coordenate</param>
+            <param name="plane">The selection plane number</param>
+        </member>
+        <member name="M:Muni.Calibration.Calculate_Resolutions(System.String[]@,System.Windows.Forms.ProgressBar@,System.Windows.Forms.Label@,System.Windows.Forms.Button@,System.Windows.Forms.Button@,System.Int32,System.Boolean)">
+            <summary>
+            This function wraps the entire implementation of the class to the outside world. This function needs several
+            initial parameters like the filenames array, the isolevel value, and several object to show the task progress.
+            </summary>
+            <param name="filenames">A string array with the filenames of the image package</param>
+            <param name="progressbar">A progressbar object to show the task progress</param>
+            <param name="label_progress">A label object to show the current working plane number</param>
+            <param name="cancel">A cancel button object from the Image_Form</param>
+            <param name="finish">A finish button object fromt the Image Form</param>
+            <param name="isolevel">The calculate isolevel value</param>
+            <param name="zoom">This boolean image package have alredy been zoomed or not</param>
+        </member>
+        <member name="M:Muni.Calibration.Calculate_Diameter(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            This function calculates the dendrite diameter, using isolevel value to determine the dendrite diameter in 
+            pixels, and then translate it into microns.
+            </summary>
+            <param name="isolevel">The isolevel value, wich is the margin value between the neuron and the background</param>
+            <param name="x1">The x coordenate of the line beginig</param>
+            <param name="y1">The y coordenate of the line beginig</param>
+            <param name="x2">The x coordenate of the line ending</param>
+            <param name="y2">The y coordenate of the line ending</param>
+            <returns>On error this function returns false and true otherwise</returns>
+        </member>
+        <member name="M:Muni.Calibration.Fill_Matrix(System.Drawing.Rectangle,System.Int32)">
+            <summary>
+            This function uses the selected user region and the image data to load on the memory a byte matrix
+            with the image data on the selected region. 
+            </summary>
+            <param name="rc">This rectagule defines the user's selected region</param>
+            <param name="plane">This is the number of the plane where the selection ocurred</param>
+        </member>
+        <member name="T:Muni.About">
+            <summary>
+            This class justs implements the About screen
+            </summary>
+        </member>
+        <member name="F:Muni.About.components">
+            <summary>
+            Variable del diseñador requerida.
+            </summary>
+        </member>
+        <member name="M:Muni.About.Dispose(System.Boolean)">
+            <summary>
+            Limpiar los recursos que se estén utilizando.
+            </summary>
+            <param name="disposing">true si los recursos administrados se deben eliminar; false en caso contrario, false.</param>
+        </member>
+        <member name="M:Muni.About.InitializeComponent">
+            <summary>
+            Método necesario para admitir el Diseñador. No se puede modificar
+            el contenido del método con el editor de código.
+            </summary>
+        </member>
+        <member name="T:Muni.Mesh">
+            <summary>
+            This class saves all the data of the 3D model generated by the Marching Cubes Algorithm.
+            It also saves all Mesh data like the dot array, the normal array, the scale factors
+            of the model, and the total number of triangles in the Mesh.
+            
+            This class also saves information about the scene like the dimensions of the container box, 
+            the colors of the elements in the scene, the objetive magnitude and the scale factor
+            of the model in microns. I know this must be in other class I'm working on it.
+            </summary>
+        </member>
+        <member name="F:Muni.Mesh.normales">
+            The dot array
+        </member>
+        <member name="F:Muni.Mesh.escx">
+            The normal array 
+        </member>
+        <member name="F:Muni.Mesh.escy">
+            The normal array 
+        </member>
+        <member name="F:Muni.Mesh.escz">
+            The normal array 
+        </member>
+        <member name="F:Muni.Mesh.objetive">
+            The scale factors of the model
+        </member>
+        <member name="F:Muni.Mesh.dimx">
+            The objetive magnitude 
+        </member>
+        <member name="F:Muni.Mesh.dimy">
+            The objetive magnitude 
+        </member>
+        <member name="F:Muni.Mesh.dimz">
+            The objetive magnitude 
+        </member>
+        <member name="F:Muni.Mesh.micronx">
+            The dimensions of the image package
+        </member>
+        <member name="F:Muni.Mesh.microny">
+            The dimensions of the image package
+        </member>
+        <member name="F:Muni.Mesh.micronz">
+            The dimensions of the image package
+        </member>
+        <member name="F:Muni.Mesh.micron">
+            The dimensions of the image package
+        </member>
+        <member name="F:Muni.Mesh.colores">
+            The micron scale parameters of the image stack
+        </member>
+        <member name="F:Muni.Mesh.max">
+            A color array to save the colors of the scene
+        </member>
+        <member name="M:Muni.Mesh.#ctor">
+            <summary>
+            Default constructor for the ISerializable interface.
+            </summary>
+        </member>
+        <member name="M:Muni.Mesh.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            This constructor its only of the ISerializable implementation
+            </summary>
+            <param name="info"></param>
+            <param name="ctxt"></param>
+        </member>
+        <member name="M:Muni.Mesh.#ctor(System.IO.StreamReader,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            This constructor after the marching cubes algorithm has completed the work.
+            </summary>
+            <param name="sr">The IO Stream to read all the model data generaed and saved in a tmp file</param>
+            <param name="trian_count">The number of triangules generated by the MC Algorithm</param>
+            <param name="dimx">The x lenght of the picture package</param>
+            <param name="dimy">The y lenght of the picture package</param>
+            <param name="dimz">The number of pictures on the picture package</param>
+        </member>
+        <member name="M:Muni.Mesh.Read_Debug_File(System.IO.FileStream,System.Windows.Forms.ToolStripProgressBar)">
+            <summary>
+            This read the model data froma a file in text format. I used this for
+            debbug purposes in version 1.1 this function has been deprecated by Read_File
+            </summary>
+            <param name="file">The filestream were the model info is</param>
+            <param name="progress">A progress bar object to show the reading progress</param>
+            <returns>If an error ocurrs it returns false, true otherwise</returns>
+        </member>
+        <member name="M:Muni.Mesh.Save_Debug_File(System.IO.FileStream,Muni.OpenGlColor[],System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.Windows.Forms.ToolStripProgressBar)">
+            <summary>
+            Saves all the data model on a text file. This function was implemented for debug porpuses,
+            by know it has been deprecated with the Save_File function.
+            </summary>
+            <param name="file">The filestream where the model data will be saved</param>
+            <param name="colors">An array of OpenGlColor with all the color parameters of the scene objects</param>
+            <param name="escx">The x scale factor of the model</param>
+            <param name="escy">The y scale factor of the model</param>
+            <param name="escz">The z scale factor of the model</param>
+            <param name="micronx">The micron resolution of the picture stack on X</param>
+            <param name="microny">The micron resolution of the picture stack on Y</param>
+            <param name="micronz">The micron resolution of the picture stack on Z</param>
+            <param name="micron">The final calculated microns resolution of the 3D model</param>
+            <param name="objetive">The microscope's objetive resolution</param>
+            <param name="progress">A progress bar object to show the saving work progress</param>
+            <returns>This returns false in case of error or true otherwise</returns>
+        </member>
+        <member name="M:Muni.Mesh.Type(System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+            A litle function that controls the polygonmode of the Mesh.
+            This fucntion has tree bool parameters and only one of them will be true, the
+            other two must be false. 
+            </summary>
+            <param name="triangulos">If true the model will show filled polygons</param>
+            <param name="lineas">If true the model will show only lines</param>
+            <param name="pts">If true only vertex points will be shown</param>
+        </member>
+        <member name="M:Muni.Mesh.Draw">
+            <summary>
+            This function calls the functions to draw the entire Mesh. To draw the mesh
+            a normal and a vertex array is used. This tecnique is used because the models
+            are very big. 
+            </summary>
+        </member>
+        <member name="M:Muni.Mesh.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            This function implements the GetObjectData function for ISerializable ineterface. 
+            This is only used for serialize the mesh object before save it on a binary file. 
+            </summary>
+            <param name="info">SerializationInfo</param>
+            <param name="ctxt">StreamingContext</param>
+        </member>
+        <member name="M:Muni.Mesh.Read_File(System.String)">
+            <summary>
+            This funcion reads 3D Model's data from a binary file. This deserializes the data in the 
+            file, creates a temporal Mesh object and fills the properties of this object with temporal 
+            objetive properties. 
+            </summary>
+            <param name="file">A string with the path of the binary file.</param>
+            <returns>This returns false if an error ocurrs, and true otherwise.</returns>
+        </member>
+        <member name="M:Muni.Mesh.Save_File(System.String,Muni.OpenGlColor[],System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Int32)">
+            <summary>
+            This function saves the data of the model in a binary file. This function replaces Save_Debug_File
+            from the 1.0 version. This function serializes the info of the mesh and saves it on a binary file. 
+            </summary>
+            <param name="file">The filestream were the binary that will be saved.</param>
+            <param name="colors">An array with the colors of the scnene's objects</param>
+            <param name="escx">The X scale factor of the model</param>
+            <param name="escy">The Y scale factor of the model</param>
+            <param name="escz">The Z scale factor of the model</param>
+            <param name="micronx">This saves the micron resolution for the picture stack on X</param>
+            <param name="microny">This saves the micron resolution for the picture stack on X</param>
+            <param name="micronz">This saves the micron resolution for the picture stack on X</param>
+            <param name="micron">This saves the final micron resolution of the 3D model</param>
+            <param name="objetive">This saves the microsocope's objetive magnitude</param>
+            <returns>This function returns false on error, otherwise it returns true</returns>
+        </member>
+        <member name="T:Muni.Image_Form">
+            <summary>
+            This class implements the 4 step model creation form.
+            </summary>
+        </member>
+        <member name="M:Muni.Image_Form.check_integer(System.String,System.Globalization.CultureInfo)">
+            <summary>
+            Returns false if s is not a valid integer
+            </summary>
+            <param name="s">A string that represents an interger value</param>
+            <param name="c">Set the current CultureInfo to transform the string</param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Image_Form.check_real(System.String,System.Globalization.CultureInfo)">
+            <summary>
+            Returns false if s is not a valid floating point value.
+            </summary>
+            <param name="s">A string that represents an real value</param>
+            <param name="c">Set the current CultureInfo to transform the string</param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Image_Form.#ctor">
+            <summary>
+            This is default class constructor
+            </summary>
+        </member>
+        <member name="M:Muni.Image_Form.Change_Step(System.Byte)">
+            <summary>
+            This function changes dockstyle of the different panel for each step.
+            And also performs a step on the progressbar and changes the color of
+            the corresponding button on the vertical toolbar.
+            </summary>
+            <param name="choice">The number of the step to move</param>
+        </member>
+        <member name="M:Muni.Image_Form.panel1_openfiles_Click(System.Object,System.EventArgs)">
+            <summary>
+            This class implements the openfiles button on the first step. This function opens all the selected
+            images on a normal CommonDialog Box and fill the filenames array with their paths.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel1_openfolder_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function implements the open folder button on the first panel. This function fills the filenames array with
+            all the image filenames founded on the folder.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel1_next_Click(System.Object,System.EventArgs)">
+            <summary>
+            This only calls the Change_Step function with 2 as parameter. This means that the user is passing from 
+            the first panel to the second one.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel2_next_Click(System.Object,System.EventArgs)">
+            <summary>
+            This panel has some objects to obtain several parameters like the objetive maginitifation, and the micron
+            image resolution on X and Y.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel3_listBox_SelectedIndexChanged(System.Object,System.EventArgs)">
+            <summary>
+            This panel calibration interface. This interface has a big picturebox object a list and several buttons. 
+            This interface helps the user to obtain the isolevel value, just by selecting some focused and diffuse 
+            regions on the image package.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.GetBorderPixels">
+            <summary>
+            This little function shows the selected isolevel value on the picture thumbnail. This
+            help the user to know if the calculated isolevel is correct or not.
+            </summary>
+        </member>
+        <member name="M:Muni.Image_Form.Paint_Thumb">
+            <summary>
+            This function paint a thumbnail of the image plane in another picturebox. This
+            helps the user to move around the image stack to quickly select the diffuse and 
+            focus regions. This also paints a little red rectangle on the thumbnail to show
+            were is the image scroll
+            </summary>
+        </member>
+        <member name="M:Muni.Image_Form.panel3_panel_Scroll(System.Object,System.Windows.Forms.ScrollEventArgs)">
+            <summary>
+            This function scrolls the main picturebox object and also refresh the thumbnail picturebox
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel3_pictureBox1over_MouseDown(System.Object,System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            The user can scroll the main picturebox using the thumbnail box. The user just needs to 
+            move the little red rectangule around with a left mouse click.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel3_pictureBox1over_MouseUp(System.Object,System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            The user can select the focus and diffuse regions of the image, just by pressing the left mouse button
+            move the mouse over the selected region and unpressing the left mouse button. This event captures the 
+            mouseup event and then a line is painted over the selected region, to indicate the user the selected 
+            region.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.Focus_Num_Check">
+            <summary>
+            This function validates the number focus and diffuse regions selected. And it also checks
+            if the user has selected a dendrite and estimated it's diameter.
+            </summary>
+        </member>
+        <member name="M:Muni.Image_Form.Fill_Matrix(System.Int32)">
+            <summary>
+            This function loads the image data into byte matrix. This feature improves the algorithms speed.
+            </summary>
+            <param name="plano">The number of the image plane to be loaded</param>
+        </member>
+        <!-- El comentario XML con formato incorrecto se omite para el miembro "M:Muni.Image_Form.panel3_pictureBox1over_MouseMove(System.Object,System.Windows.Forms.MouseEventArgs)" -->
+        <member name="M:Muni.Image_Form.Image_Form_Resize(System.Object,System.EventArgs)">
+            <summary>
+            This little function refresh the red rectangule dimension on the thumbnail everytime
+            the main form dimentions change.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.Check_Need_Zoom">
+            <summary>
+            This function automatically checks the "Apply a 300% Bilineal Zoom" option if the image dimetions are
+            below 1000x900. The bilineal zoom improves the quality of the 3D model.
+            </summary>
+        </member>
+        <member name="M:Muni.Image_Form.panel3_next_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function implements the panel3 next button event. This button is enabled only if the user
+            a dendrite, 3 focus regions and 3 diffuse regions. 
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.Check_And_Parse_Panel4">
+            <summary>
+            This function validates the given parameters on the Image Processing panel
+            </summary>
+            <returns>This function return true if all the parameters are valid, and false otherwise</returns>
+        </member>
+        <member name="M:Muni.Image_Form.panel4_next_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function implements the next button event on the Image Processing panel. This function is very important
+            because here are called all the necessary function to generate the 3D model, according to the user given parameters.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel4_cancel_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function cancels the entire operation. If the model haven't created yet and if there is a thread
+            running the thread is stopped.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.Move_ListItem(System.Int32)">
+            <summary>
+            This function moves an image plane into the package. The move parameter indicates the number
+            of times the plane will be move.
+            </summary>
+            <param name="move">The number of times the plane will be move</param>
+        </member>
+        <member name="M:Muni.Image_Form.panel3_up_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function moves the current selected image one step up.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel3_down_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function moves the current selected image one step down
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel3_upten_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function moves the current selected plane 5 steps up
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel3_downten_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function moves the current selected plane 5 steps down
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel3_thumbover_MouseClick(System.Object,System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            Every time the user clicks on the thumnail's picturebox the main picture box scrolls to that position.
+            and also the little red rectagle on the thumbnail moves.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel3_isolist_SelectedIndexChanged(System.Object,System.EventArgs)">
+            <summary>
+            This function repaints thumbnail and if there is a calulated isolevel value this also repaints 
+            the margin, everytime the selected image changes.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Image_Form.panel3_reset_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function implements the reset button event on the Calibration step. This button resets all the 
+            selected regions and values to empty and also intilizes all the flags and object used on this step.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="F:Muni.Image_Form.components">
+            <summary>
+            Variable del diseñador requerida.
+            </summary>
+        </member>
+        <member name="M:Muni.Image_Form.Dispose(System.Boolean)">
+            <summary>
+            Limpiar los recursos que se estén utilizando.
+            </summary>
+            <param name="disposing">true si los recursos administrados se deben eliminar; false en caso contrario, false.</param>
+        </member>
+        <member name="M:Muni.Image_Form.InitializeComponent">
+            <summary>
+            Método necesario para admitir el Diseñador. No se puede modificar
+            el contenido del método con el editor de código.
+            </summary>
+        </member>
+        <member name="T:Muni.Ruler">
+            <summary>
+            This class implements the Ruler to measure the 3D model length
+            </summary>
+        </member>
+        <member name="M:Muni.Ruler.#ctor">
+            <summary>
+            This is the Ruler constructor
+            </summary>
+        </member>
+        <member name="M:Muni.Ruler.Left(System.Int32)">
+            <summary>
+            This function moves to the left the selected ruler pointer. (X Axis)
+            </summary>
+            <param name="s"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Ruler.Right(System.Int32)">
+            <summary>
+            This function moves to the Right the selected ruler edge (X Axis)
+            </summary>
+            <param name="s"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Ruler.Ahead(System.Int32)">
+            <summary>
+            This function moves ahead the selected ruler edge. (Z Axis)
+            </summary>
+            <param name="s"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Ruler.Back(System.Int32)">
+            <summary>
+            This function moves back the selected ruler edge (Z Axis)
+            </summary>
+            <param name="s"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Ruler.Up(System.Int32)">
+            <summary>
+            This object moves up the selected ruler edge (Y Axis)
+            </summary>
+            <param name="s"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Ruler.Down(System.Int32)">
+            <summary>
+            This function moves down the selected ruler edge (Y Axis)
+            </summary>
+            <param name="s"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Ruler.Reset(System.Int32)">
+            <summary>
+            This function resets the selected Ruler's edge to the center of the model
+            </summary>
+            <param name="s"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Ruler.selected(System.Int32)">
+            <summary>
+            This function updates the sel variable. This variable stores current selected edge of the Ruler.
+            </summary>
+            <param name="sel"></param>
+        </member>
+        <member name="M:Muni.Ruler.set_calibration(System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            This function sets the micron resolution parameters.
+            </summary>
+            <param name="micronx">The x micron image package resolution</param>
+            <param name="microny">The y micron image packege resolution</param>
+            <param name="micronz">The z micron image package resolution</param>
+            <param name="micron">The final micron image package resolution</param>
+        </member>
+        <member name="M:Muni.Ruler.Distance">
+            <summary>
+            This function calculates the distance between the ruler's edges. This function return the meause
+            in microns. WARNING: Its necessary to check the results for this function
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Ruler.Draw(Muni.OpenGlColor)">
+            <summary>
+            This is the render function for the Ruler object. This function also refreshes the color of the
+            selected ruler's edges. This function also draws a line between the two ruler's edges.
+            </summary>
+            <param name="color"></param>
+        </member>
+        <member name="T:Muni.Form1">
+            <summary>
+            This is the main form of Muni
+            </summary>
+        </member>
+        <member name="F:Muni.Form1.components">
+            <summary>
+            Variable del diseñador requerida.
+            </summary>
+        </member>
+        <member name="M:Muni.Form1.Dispose(System.Boolean)">
+            <summary>
+            Limpiar los recursos que se estén utilizando.
+            </summary>
+            <param name="disposing">true si los recursos administrados se deben eliminar; false en caso contrario, false.</param>
+        </member>
+        <member name="M:Muni.Form1.InitializeComponent">
+            <summary>
+            Método necesario para admitir el Diseñador. No se puede modificar
+            el contenido del método con el editor de código.
+            </summary>
+        </member>
+        <member name="F:Muni.Form1.cajita">
+            This object saves all the model data and also some data about the scene
+        </member>
+        <member name="F:Muni.Form1.selectBuf">
+            This object draws a box containing the neuron model
+        </member>
+        <member name="M:Muni.Form1.check_real(System.String,System.Globalization.CultureInfo)">
+            <summary>
+            Returns false if s is not a valid floating point value.
+            </summary>
+            <param name="s">A string that represents an real value</param>
+            <param name="c">Set the current CultureInfo to transform the string</param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Form1.#ctor(System.String)">
+            <summary>
+            This is the constructor of the Main Muni's form
+            </summary>
+            <param name="file"></param>
+        </member>
+        <member name="M:Muni.Form1.OpenModel(System.String)">
+            <summary>
+            This function implements the actions for open a created model from a m3d file
+            </summary>
+            <param name="file">The fille's path were all the model data is saved on</param>
+            <returns>This returns false if an error ocurrs and true otherwise</returns>
+        </member>
+        <member name="M:Muni.Form1.RenderScene">
+            <summary>
+            This function render's the main scene. This function only shows the 3D model if modelview flag
+            is true and the view neuron checkbox is checked.
+            </summary>
+        </member>
+        <member name="M:Muni.Form1.RenderColorScene">
+            <summary>
+            This little function renders the color sphere scene to get a preview of the
+            picked color. This scene uses it's own lighting and camera object. 
+            </summary>
+        </member>
+        <member name="M:Muni.Form1.Paint_Mesh">
+            <summary>
+            This function paints the 3D model's vertex mesh. This uses the vertexarray tecnique
+            no graph all the 3D model because the 3D model are very big. 
+            </summary>
+        </member>
+        <member name="M:Muni.Form1.SetupRC">
+            <summary>
+            This function intializes all the lighting parameters.
+            </summary>
+        </member>
+        <member name="M:Muni.Form1.OnPaint(System.Windows.Forms.PaintEventArgs)">
+            <summary>
+            This function overrides de OnPaint event of the main form. This is
+            to refresh the principal OpenGL scene object
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.OnResize(System.EventArgs)">
+            <summary>
+            This function overrides de OnResize event of the main form. This is 
+            for refresh the main OpenGL scene dimentions
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.openImagesToolStripMenuItem_Click(System.Object,System.EventArgs)">
+            <summary>
+            Opens image pack process form and unblocks the 3d stuff from the form
+            if the user did it well opening and processing the images.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.Unblock_Form_Parts">
+            <summary>
+            This function enables several button an tabs on the main form, this function is
+            called when a 3d model had been created or readed. 
+            </summary>
+        </member>
+        <member name="M:Muni.Form1.simpleOpenGlControl1_Paint(System.Object,System.Windows.Forms.PaintEventArgs)">
+            <summary>
+            This funciton implements the OnPaint event for the simpleOpenGlControl object, this
+            only sets the view of the camera and calls the functions that renders the scene. 
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.splitContainer1_SplitterMoved(System.Object,System.Windows.Forms.SplitterEventArgs)">
+            <summary>
+            This function is called every time the splitContainer dimensions change. 
+            And then the setview and the dimensions of the scene change. 
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.view_apply_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function applies the scale factors in the 3D model. 
+            And then the OpenGL scene is refresh.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.view_change_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function applies the colors selected on the OpenGL scene.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.color_combo_SelectedIndexChanged(System.Object,System.EventArgs)">
+            <summary>
+            This function refresh the selected color on the sphere color preview.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.tabControl1_SelectedIndexChanged(System.Object,System.EventArgs)">
+            <summary>
+            When the color tab is selected the OpenGL control showing the preview color sphere
+            is selected as current.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.simpleOpenGlControl1_MouseClick(System.Object,System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            Controls the mouse clicks over the scene control.
+            Middle = resets the camera 
+            Left = calls the pitch functions (this needs some debuging work)
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.seleccion(System.Int32,System.Int32)">
+            <summary>
+            This functions recives the windows coordenates where the user clicked. 
+            And then it implements the pitch on the scene objects. using the glSelectBuffer
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Form1.color_trackR_Scroll(System.Object,System.EventArgs)">
+            <summary>
+            This is called when you use the scrolls to select a different color, and to get the
+            preview of that color the OpenGL control need to be the current one. 
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.color_trackG_Scroll(System.Object,System.EventArgs)">
+            <summary>
+            This is called when you use the scrolls to select a different color, and to get the
+            preview of that color the OpenGL control need to be the current one. 
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.color_trackB_Scroll(System.Object,System.EventArgs)">
+            <summary>
+            This is called when you use the scrolls to select a different color, and to get the
+            preview of that color the OpenGL control need to be the current one. 
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.menu_savemodel_Click(System.Object,System.EventArgs)">
+            <summary>
+            This implements the savemodel click event. This also calls all the functions
+            to serialize and save the current model on a file.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.menu_openmodel_Click(System.Object,System.EventArgs)">
+            <summary>
+            This one catches a Enter on the scale factor textbox, and then it calls view_apply function
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.view_escx_KeyPress(System.Object,System.Windows.Forms.KeyPressEventArgs)">
+            <summary>
+            This one catches a Enter on the scale factor textbox, and then it calls view_apply function
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.ProcessCmdKey(System.Windows.Forms.Message@,System.Windows.Forms.Keys)">
+            <summary>
+            This one catches all the key events on the simpleOpenGLControl most of these keys are  
+            for controling the camera position.
+            </summary>
+            <param name="msg"></param>
+            <param name="keyData"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Form1.simpleOpenGlControl1_MouseDown(System.Object,System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            Catches the mouse cursor postion on the screen.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.simpleOpenGlControl1_MouseWheel(System.Object,System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            This also controls the position of the camera emulation the scroll and zooming functions
+            in vector drawing programs. Shift + Wheel = Up/Down, Ctrl + Whell = Foward/Backwards
+            Alt + Whell = Left/Right rotation.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.simpleOpenGlControl1_MouseMove(System.Object,System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            This catches de event when the right or left mouse button is pressed and the mouse cursor moves. 
+            This event activates the camera movement accordingly to the cursor position.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.viewradiocheck(System.Object,System.EventArgs)">
+            <summary>
+            When a radio button changes its value the main scene is refreshed.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.measuer_ahead_Click(System.Object,System.EventArgs)">
+            <summary>
+            This moves the selected ruler's pointer to the front.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.measure_back_Click(System.Object,System.EventArgs)">
+            <summary>
+            This moves the selected ruler's pointer to the back
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.measure_left_Click(System.Object,System.EventArgs)">
+            <summary>
+            This moves the selected ruler's pointer to the left
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.measure_right_Click(System.Object,System.EventArgs)">
+            <summary>
+            This moves the selected ruler's pointer to the right.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.measure_up_Click(System.Object,System.EventArgs)">
+            <summary>
+            This moves the selected ruler pointer up
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.measure_down_Click(System.Object,System.EventArgs)">
+            <summary>
+            This moves the selected ruler pointer down
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.measure_reset_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function resets the Ruler position to the center of the scene
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.mesure_resetboth_Click(System.Object,System.EventArgs)">
+            <summary>
+            This function resets both ruller pointers on the scene to the center of the model.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.Form1_Load(System.Object,System.EventArgs)">
+            <summary>
+            When Muni's Main Form loads
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.exitToolStripMenuItem_Click(System.Object,System.EventArgs)">
+            <summary>
+            This one finishes the program
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.menu_view_website_Click(System.Object,System.EventArgs)">
+            <summary>
+            Opens Muni's webpage
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.measure_view_length_CheckedChanged(System.Object,System.EventArgs)">
+            <summary>
+            This diplays activates the ruler on the scene
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Form1.menu_about_Click(System.Object,System.EventArgs)">
+            <summary>
+            Displays the about form
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="T:Muni.MeshSerializer">
+            <summary>
+            The principal function of this class is to serialize a Mesh object. 
+            This class it also used when a Mesh object is saved into a binary file
+            or it is used to get a Mesh object from a binary file. 
+            The implemention of this class deprecates the old way to save the 
+            3D model data on txt files. 
+            </summary>
+        </member>
+        <member name="M:Muni.MeshSerializer.#ctor">
+            <summary>
+            The defualt constructor
+            </summary>
+        </member>
+        <member name="M:Muni.MeshSerializer.SaveMesh(System.String,Muni.Mesh)">
+            <summary>
+            This function recives a path string and a Mesh object. This serializes the Mesh
+            object into binary and saves the stream into a binary file. 
+            </summary>
+            <param name="filename">The path where the serialized mesh object will be saved</param>
+            <param name="objectToSerialize">The Mesh object that will be saved on a file</param>
+        </member>
+        <member name="M:Muni.MeshSerializer.LoadMesh(System.String)">
+            <summary>
+            This function reads an serialized Mesh object from a binary file. This 
+            function recives the file path where the binary file is, then it read the stream
+            and deserialize it on a Mesh object
+            </summary>
+            <param name="filename">The file path where the Mesh object is serialized</param>
+            <returns>On an error this returns false, true otherwise</returns>
+        </member>
+        <member name="T:Muni.Punto">
+            <summary>
+            This class is a little structure to save dots coordenates
+            </summary>
+        </member>
+        <member name="M:Muni.Punto.#ctor">
+            <summary>
+            This initilizes all the dot coordinates to -1 and the neighbor list to empty.
+            </summary>
+        </member>
+        <member name="M:Muni.Punto.#ctor(System.Single,System.Single,System.Single)">
+            <summary>
+            This constructor intilizes the x,y,z coordenates of the dot. And the neighbor list to empty.
+            </summary>
+            <param name="x">X coordenate</param>
+            <param name="y">Y coordenate</param>
+            <param name="z">Z coordenate</param>
+        </member>
+        <member name="T:Muni.Splash">
+            <summary>
+            This class only implements the initial splash screen
+            </summary>
+        </member>
+        <member name="F:Muni.Splash.components">
+            <summary>
+            Variable del diseñador requerida.
+            </summary>
+        </member>
+        <member name="M:Muni.Splash.Dispose(System.Boolean)">
+            <summary>
+            Limpiar los recursos que se estén utilizando.
+            </summary>
+            <param name="disposing">true si los recursos administrados se deben eliminar; false en caso contrario, false.</param>
+        </member>
+        <member name="M:Muni.Splash.InitializeComponent">
+            <summary>
+            Método necesario para admitir el Diseñador. No se puede modificar
+            el contenido del método con el editor de código.
+            </summary>
+        </member>
+        <member name="T:Muni.Container">
+            <summary>
+            This class is a little data structure to store the container box coordenates
+            </summary>
+        </member>
+        <member name="M:Muni.Container.#ctor(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            This is the default Constructor for the Container class
+            </summary>
+            <param name="dx">The distance from the center of the box to the X edge</param>
+            <param name="dy">The distance from the center of the box to the Y edge</param>
+            <param name="dz">The distance from the center of the box to the Z edge</param>
+            <param name="px">The X position coordenate</param>
+            <param name="py">The Y position coordenate</param>
+            <param name="pz">The Z position coordenate</param>
+        </member>
+        <member name="M:Muni.Container.Draw(Muni.OpenGlColor)">
+            <summary>
+            This function builds, translate and render the container box into the main scene
+            </summary>
+            <param name="color">This is just a OpenGlColor to setup the color of the box</param>
+        </member>
+        <member name="T:Muni.Zoom">
+            <remarks>
+            This class only implements a Bilineal Zooming filter on batch. This takes several file paths on a 
+            string array and saves the result on another path. If the same path is selected then all the original
+            images are overwriten.
+            </remarks>
+        </member>
+        <member name="M:Muni.Zoom.#ctor(System.Int32,System.String[]@,System.String,System.Windows.Forms.ProgressBar@,System.Windows.Forms.Label@,System.Windows.Forms.Button@,System.Windows.Forms.Button@)">
+            <summary>
+            This is the constructor of the Zoom class
+            </summary>
+            <param name="dimz">The number of planes on the image package</param>
+            <param name="filenames">A string array with all the image paths</param>
+            <param name="zoom_path">A string path were all the resulting images will be save</param>
+            <param name="progressbar">A progressbar objecto to indicate the task progress</param>
+            <param name="label_progress">A label object to indicate the current working plane</param>
+            <param name="cancel">This is the cancel button on the Image_Form</param>
+            <param name="finish">This is the finish button on the Image_Form</param>
+        </member>
+        <member name="M:Muni.Zoom.Initalize_BgWorker">
+            <summary>
+            This function initilizes the thread parameters before appliying the bath zoom filter
+            </summary>
+        </member>
+        <member name="M:Muni.Zoom.ImgToMat(System.Byte[0:,0:]@,System.String)">
+            <summary>
+            This function loads a Bitmap object into the memory, on a two dimentional byte matrix.
+            First this recives the path of the image on the filename parameter, and then the image is 
+            converted into Bitmap object, converted into a byte matrix. And then the resulting matrix
+            is loaded into the main memory.
+            </summary>
+            <param name="pixels">This is the resulting byte matrix, passed by reference</param>
+            <param name="filename">The path of the image</param>
+        </member>
+        <member name="M:Muni.Zoom.MatToImg(System.Byte[0:,0:]@,System.Drawing.Bitmap@)">
+            <summary>
+            This function recives a two dimentional matrix and a bitmap object, both by reference.
+            With this data this function converts the data on the byte matrix into a bitmap object.
+            </summary>
+            <param name="pixels">The byte matrix data stored on the main memory</param>
+            <param name="b">The resulting bitmap object</param>
+        </member>
+        <member name="M:Muni.Zoom.Bilineal_Zoom(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            This function implements a Bilinear Zoom, to do it this recibes a bitmap by reference and the new
+            desired bitmap dimentions. Then the function returns a Bitmap object as result.
+            </summary>
+            <param name="anchoi">The original iamge width</param>
+            <param name="altoi">The original image heigth</param>
+            <param name="ancho">The desired width for the resulting image</param>
+            <param name="alto">The desired heigth for the resulting image</param>
+        </member>
+        <member name="M:Muni.Zoom.thread_DoWork(System.Object,System.ComponentModel.DoWorkEventArgs)">
+            <summary>
+            This function implements the entire process to zoom an imgage. First the original image data is loaded
+            into the main memory and another byte matrix is created to store the result. Then the Bilineal Zoom is applied
+            to the original image and then the result stored on the memory is converted into an image. The only way 
+            to call this function is using the Batch_Zoom wrapper function.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Zoom.thread_ProgressChanged(System.Object,System.ComponentModel.ProgressChangedEventArgs)">
+            <summary>
+            This funcition is called everytime the progressbar value changes. This function refresh the 
+            status label with current plane number.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Zoom.thread_RunWorkerCompleted(System.Object,System.ComponentModel.RunWorkerCompletedEventArgs)">
+            <summary>
+            This function is called when the operation is cancel or the thread finish the work.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Muni.Zoom.Batch_Zoom(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            This function graps the entire functionality of the Zoom class. This applies the zoom filter to
+            all the images on the filenames[] array.
+            </summary>
+            <param name="anchoi">The original width of the pictures</param>
+            <param name="altoi">The original heigth of the pictures</param>
+            <param name="ancho">The desired width for the resulting image</param>
+            <param name="alto">The desired heigth for the resulting image</param>
+            <returns>If an error ocurrs the funtion returns false and true otherwise</returns>
+        </member>
+        <member name="T:Muni.Camera">
+            <summary>
+            This class handles all the camera stuff, position, looking and type
+            </summary>
+        </member>
+        <member name="M:Muni.Camera.#ctor">
+            <summary>
+            Constructor of the camera, set the initial values of it as a First Person Camera
+            </summary>
+        </member>
+        <member name="M:Muni.Camera.#ctor(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            The Constructor of the Camera who sets the initial parameters given by the user.
+            </summary>
+            <param name="posx">Where the camera is in X</param>
+            <param name="posy">Where the camera is in Y</param>
+            <param name="posz">Where the camera is in Z</param>
+            <param name="lookx">Where the camera is looking on X</param>
+            <param name="looky">Where the camera is looking on Y</param>
+            <param name="lookz">Where the camera is looking on Z</param>
+            <param name="type">False for First Person View and True for Scene Rotation</param>
+        </member>
+        <member name="M:Muni.Camera.SetView(System.Int32,System.Int32)">
+            <summary>
+             This function sets all initial OpenGl parameters of the camera, depending on positon and where is looking
+            </summary>
+            <param name="width">The width of the openglsimplecontrol</param>
+            <param name="height">The height of the openglsimplecontrol</param>
+        </member>
+        <member name="M:Muni.Camera.Adjust_to_Model(System.Single,System.Single,System.Single,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Adjust the camera look plane and position to the escale and model dimensions.
+            </summary>
+            <param name="escx">The scale factor of the scene in X</param>
+            <param name="escy">The scale factor of the scene in Y</param>
+            <param name="escz">The scale factor of the scene in Z</param>
+            <param name="dimx">The dimension of the image package in X</param>
+            <param name="dimy">The dimension of the image package in Y</param>
+            <param name="dimz">The dimension of the image package in Z</param>
+        </member>
+        <member name="M:Muni.Camera.Refresh_Look">
+            <summary>
+            This function refresh the ModelView Matrix, and refresh the position and look plane of the camera
+            </summary>
+        </member>
+        <member name="M:Muni.Camera.Turn_Left">
+            <summary>
+            Turns the camera to the Left just one step.
+            </summary>
+        </member>
+        <member name="M:Muni.Camera.Turn_Right">
+            <summary>
+            Turns the camera to the Right just one step.
+            </summary>
+        </member>
+        <member name="M:Muni.Camera.Go_Ahead">
+            <summary>
+            Moves the position of the camera one step.
+            </summary>
+        </member>
+        <member name="M:Muni.Camera.Go_Back">
+            <summary>
+            Moves the position of the camera one step.
+            </summary>
+        </member>
+        <member name="M:Muni.Camera.Up">
+            <summary>
+            Moves the camera one step Up on the Y axis.
+            </summary>
+        </member>
+        <member name="M:Muni.Camera.Down">
+            <summary>
+            Moves the camera one step down on the Y axis.
+            </summary>
+        </member>
+        <member name="M:Muni.Camera.Mouse_Move(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Windows.Forms.MouseButtons,System.Int32,System.Int32,System.Boolean)">
+            <summary>
+            Controls all the mouse movements over the simpleopenglcontrol, and moves the just the look plane.
+            </summary>
+            <param name="ix">Where the mouse was on X</param>
+            <param name="iy">Where the mouse was on Y</param>
+            <param name="fx">Where the mouse is right now on X</param>
+            <param name="fy">Where the mouse is right now on Y</param>
+        </member>
+        <member name="M:Muni.Camera.Reset">
+            <summary>
+            This resets the position and looking of the camera 
+            </summary>
+        </member>
+        <member name="T:Muni.Isolevel">
+            <summary>
+            This class calculates the isolevel parameter for the Marching Cubes Algorithm
+            The isolevel value is calculated on the user's selected regions. Remember that there are two kinds of regions
+            the ones that are in focus and the ones that not.
+            </summary>
+        </member>
+        <member name="M:Muni.Isolevel.#ctor">
+            <summary>
+            The basic constructor of the class. This initializes several parameters.
+            </summary>
+        </member>
+        <member name="M:Muni.Isolevel.Add_Line(System.Int32,System.Int32,System.Int32,System.Int32,System.String,System.Boolean)">
+            <summary>
+            This one adds a new Line to the class. This fuction recives the start and ending points of the 
+            line and saves them on the beg_line and end_line lists. This also recives and stores the path
+            of the selected plane, and also if the line selects a focused region or not.
+            </summary>
+            <param name="x1">The x coordenate of the starting point</param>
+            <param name="y1">The y coordenate of the starting point</param>
+            <param name="x2">The x coordenate of the ending point</param>
+            <param name="y2">The y coordenate of the ending point</param>
+            <param name="plane">This recives the path of the current image plane</param>
+            <param name="focus">This indicates if the line selects a focused region or not</param>
+        </member>
+        <member name="M:Muni.Isolevel.Clear">
+            <summary>
+            This clears all the data inside the lists of the class
+            </summary>
+        </member>
+        <member name="M:Muni.Isolevel.Calculate_Isolevel">
+            <summary>
+            This function calculates the isovalue. Using the 3 lines on focus and 3 lines on the background
+            this function travels along them and calculates the darkest value on every them. Then the isovalue
+            its calculated in between the average darkest value of the on focus lines and the smooth lines. 
+            </summary>
+            <returns>Rerturns the isolevel value</returns>
+        </member>
+        <member name="M:Muni.Isolevel.Calculate_Minimum(System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            This function travels along the line, and gets the minimum or darkest value
+            on the line. The line coordenates are indicated on the function parameters
+            </summary>
+            <param name="x1">x start coordenate</param>
+            <param name="y1">y start coordenate</param>
+            <param name="x2">x end coordenate</param>
+            <param name="y2">y en corrdenate</param>
+            <returns></returns>
+        </member>
+        <member name="M:Muni.Isolevel.Fill_Matrix(System.Drawing.Rectangle,System.String)">
+            <summary>
+            This fucntion fill the byte matrix with the pixel data on the provided image.
+            </summary>
+            <param name="rc">The region where </param>
+            <param name="name">The image path were the function gets the data</param>
+        </member>
+        <member name="T:Muni.Properties.Resources">
+            <summary>
+              Clase de recurso con establecimiento inflexible de tipos, para buscar cadenas traducidas, etc.
+            </summary>
+        </member>
+        <member name="P:Muni.Properties.Resources.ResourceManager">
+            <summary>
+              Devuelve la instancia de ResourceManager almacenada en caché utilizada por esta clase.
+            </summary>
+        </member>
+        <member name="P:Muni.Properties.Resources.Culture">
+            <summary>
+              Reemplaza la propiedad CurrentUICulture del subproceso actual para todas las
+              búsquedas de recursos mediante esta clase de recurso con establecimiento inflexible de tipos.
+            </summary>
+        </member>
+        <member name="T:Muni.OpenGlColor">
+            <summary>
+            This class is a little data structure to represent the tree color components.
+            It is used to represent the color of the background, the neuron, the container box
+            and it is also serialized to be able to save it on binary format.
+            </summary>
+        </member>
+        <member name="M:Muni.OpenGlColor.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:Muni.OpenGlColor.#ctor(System.Byte,System.Byte,System.Byte)">
+            <summary>
+            Constructor with arguments
+            </summary>
+            <param name="R">Red component in byte format</param>
+            <param name="G">Green component in byte format</param>
+            <param name="B">Blue component in byte format</param>
+        </member>
+        <member name="M:Muni.OpenGlColor.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            This Constructor is only for the ISerializable interface
+            </summary>
+            <param name="info">SerializationInfo</param>
+            <param name="ctxt">StremingContext</param>
+        </member>
+        <member name="M:Muni.OpenGlColor.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            The GetObjectData implementation for the ISerializable interface
+            </summary>
+            <param name="info">SerializationInfo</param>
+            <param name="context">StreamingContext</param>
+        </member>
+        <member name="M:Muni.Program.Main(System.String[])">
+            <summary>
+            Punto de entrada principal para la aplicación.
+            </summary>
+        </member>
+    </members>
+</doc>
