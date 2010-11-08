@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="Muni">
+</Property><Property Name="Archivo de la solución" Value="H:\Muni\Muni.sln">
+</Property><Property Name="Date" Value="Domingo, 31 de Octubre de 2010">
+</Property><Property Name="Time" Value="18:43 p.m.">
+</Property></Properties><Event ErrorLevel="0" Project="Muni" Source="Muni\Muni.csproj" Description="Proyecto convertido correctamente">
+</Event><Event ErrorLevel="3" Project="Muni" Source="Muni\Muni.csproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="Muni.sln" Description="La solución se convirtió correctamente">
+</Event><Event ErrorLevel="3" Project="" Source="Muni.sln" Description="Converted">
+</Event><Event ErrorLevel="0" Project="Muni" Source="Muni\Muni.csproj" Description="Examen completo: no es necesario actualizar los archivos de proyecto.">
+</Event></UpgradeLog>
